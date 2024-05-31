@@ -1,0 +1,159 @@
+{% extends "layouts/masterLayout.njk" %}
+
+{% block content %}
+
+<div class="container my-5">
+    <div class="card">
+        <div class="card-header text-center">
+            <p>
+                <strong>
+                    ......
+                </strong>
+            </p>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="destination">Destinasi</label>
+                        <input type="text" name="destination" id="destination" class="form-control"
+                            placeholder="Masukkan Nama Kota atau Daerah Distinasi Wisata">
+                    </div>
+                    <div class="form-group">
+                        <label for="pax">Jumlah Wisatawan</label>
+                        <input type="..." name="..." id="..." class="form-control"
+                            placeholder="Masukkan Jumlah Wisatawan">
+                    </div>
+                    <div class="form-group">
+                        <label for="currency">Mata Uang</label>
+                        <select class="form-select" id="..." aria-label="Mata Uang">
+                            <option selected disabled>Pilih Mata Uang</option>
+                            <option value="...">...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="trip_type">Tipe Liburan</label>
+                        <select class="form-select" id="..." aria-label="Tipe Perjalanan">
+                            <option selected disabled>Pilih Tipe Perjalanan</option>
+                            <option value="...">...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="budget">Budget</label>
+                        <input type="..." class="form-control" id="..." placeholder="Budget">
+                    </div>
+                    <div class="form-group">
+                        <label for="season">Musim</label>
+                        <select class="form-select" id="...." aria-label="Musim">
+                            <option selected disabled>Pilih Musim</option>
+                            <option value="...">...</option>
+                            <option value="...">...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="duration">Lama Liburan (hari)</label>
+                        <input type="..." class="form-control" id="..." placeholder="Lama Liburan (hari)">
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-3">
+                <button type="submit" id="generateButton"
+                    class="btn btn-primary bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Generate</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div id="geminiResponse" class="container" style="display: none;"></div>
+<div id="generatedText" class="container"></div>
+
+
+
+<script>
+    const generateButton = document.getElementById("generateButton");
+    const destinationInput = document.getElementById("destination");
+    const ... = document.getElementById("...");
+
+    generateButton.addEventListener("click", async () => {
+        const destination = destinationInput.value;
+        const pax = paxInput.value;
+
+        if (destination.trim() === "" || pax.trim() === "" || currency.trim() === "" || budget.trim() === "" || season.trim() === "" || duration.trim() === "" || tripType.trim() === "") {
+            alert("Please fill in all fields.");
+            return;
+        }
+
+
+        geminiResponse.innerHTML = `<h2>Gemini Response:</h2>
+        <ul>
+            <li>
+                Destination: ${destination}
+            </li>
+            <li>
+                Pax: ${pax}
+            </li>
+            <li>
+                Currency: ${currency}
+            </li>
+            <li>
+                Budget: ${budget}
+            </li>
+            <li>
+                Season: ${season}
+            </li>
+            <li>
+                Duration: ${duration}
+            </li>
+            <li>
+                Trip Type: ${tripType}
+            </li>
+        </ul>`;
+        geminiResponse.style.display = "block";
+
+        destinationInput.value = "";
+        paxInput.value = "";
+        currencySelect.selectedIndex = 0;
+        budgetInput.value = "";
+        seasonSelect.selectedIndex = 0;
+        durationInput.value = "";
+        tripTypeSelect.selectedIndex = 0;
+
+        const response = await fetch("http://127.0.0.1:8000/custom_needs", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ destination, pax, currency, budget, season, duration, tripType }),
+        });
+
+        if (!response.ok) {
+            console.error("Error:", response.statusText);
+            generatedText.innerHTML = "Error occurred while generating text.";
+            return;
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let isFinished = false;
+        let generatedTextContent = "";
+
+        while (!isFinished) {
+            const { done, value } = await reader.read();
+
+            if (done) {
+                isFinished = true;
+                break;
+            }
+
+            const chunkText = decoder.decode(value);
+            generatedTextContent += chunkText;
+            generatedText.innerHTML = marked.parse(generatedTextContent);
+            await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+    });
+</script>
+
+{% endblock %}
